@@ -25,8 +25,27 @@ resource "aws_instance" "my-instance" {
     volume_size = 10
   } 
   count=1
-  ebs_block_device {
-    device_name = "/dev/sdf"
-    volume_size = 12
+#   ebs_block_device {
+#     device_name = "/dev/sdf"
+#     volume_size = 12
+#   }
+}
+
+# create Separate EBS volume for ec2 so that ec2 doesnt change if we modify this!
+resource "aws_ebs_volume" "extra_volume" {
+  availability_zone = "us-east-1a"
+  size              = 13
+  type              = "gp2"
+
+  tags = {
+    Name = "Terraform-ExtraVolume"
   }
+}
+
+# Attach EBS volume to EC2 instance
+resource "aws_volume_attachment" "attach_volume" {
+  device_name = "/dev/sdg"
+  volume_id   = aws_ebs_volume.extra_volume.id
+  instance_id = aws_instance.my-instance[0].id
+  force_detach = true
 }
